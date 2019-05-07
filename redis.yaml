@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: redis
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: redis
+spec:   
+  selector:
+    matchLabels:
+      app: redis
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - image: caicai/redis:1.0
+        name: redis
+        ports:
+        - containerPort: 6379
+          name: redis-port
+        volumeMounts:
+        - mountPath: /redis/redis.conf
+          name: redis-config 
+        - mountPath: /redis/data 
+          name: redis-data
+        - mountPath: /redis/log 
+          name: redis-log
+      volumes:
+      - name: redis-config
+        hostPath:
+          path: /usr/iqeq/redis/docker/redis.conf
+      - name: redis-data
+        hostPath:
+          path: /usr/iqeq/redis/data
+      - name: redis-log
+        hostPath:
+          path: /usr/iqeq/redis/log
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: redis-service
+  labels:
+    app: redis-service
+  namespace: redis
+spec:
+  selector:
+    app: redis
+  type: NodePort
+  ports:
+  - protocol: TCP
+    name: redis-port
+    port: 6379
+    targetPort: 6379
+    nodePort: 26379
